@@ -1,5 +1,5 @@
-let tileRows = 45;
-let tileColumns = 45;
+let tileRows = 10;
+let tileColumns = 10;
 let tiles;
 let rowNumbers;
 let columnNumbers;
