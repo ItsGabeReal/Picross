@@ -1,12 +1,11 @@
 Todo:
     - Add dimension controls.
     - Auto pick seed, and have new game button that chooses different seed.
-    Make numbers cross out without filling in the empty spaces.
-    Add a game over state (time spent? new game button).
+    - Add a game over state (time spent? new game button).
     - Fix seed similarity issue.
 
 Stretch goal:
-    Add fill and empty animations.
-    Add animation when solved perfectly.
+    - Add fill and empty animations.
+    - Add animation when solved perfectly.
     Corner rounding based on nearby tiles.
     Add show solution toggle.

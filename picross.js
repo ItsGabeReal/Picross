@@ -23,6 +23,12 @@ let buttonsBeingPressed = { left: false, right: false, middle: false };
 let rowNeedsChecking;
 let columnNeedsChecking;
 
+let boardLocked = false; // True once every tile has been filled in, preventing further guesses
+let mistakesMade = 0; // Number of tiles guessed incorrectly during the current game
+let tilesFilledCount = 0; // Number of tiles that have been guessed so far
+let totalFilledTiles = 0; // Total number of tiles that should end up filled, per the row/column clues
+let filledTilesGuessedCorrectly = 0; // Number of filled tiles correctly identified so far
+
 
 // -------------------- FUNCTIONAL --------------------
 function onLoad() {
@@ -38,7 +44,7 @@ function onLoad() {
 function mousePressed(event) {
     let buttonsPressed = DecodeButtonPressedEvent(event);
 
-    if (hoveredTile != null && !selectingTiles) {
+    if (hoveredTile != null && !selectingTiles && !boardLocked) {
 
         if (buttonsPressed.left) {
             selectionGuess = true;
@@ -240,15 +246,69 @@ Tile.prototype.GuessTile = function (Guess) {
     // Update the visuals
     this.div.classList.remove('tile_hover');
     this.div.classList.add(this.correctState ? 'tile_filled' : 'tile_empty');
+    this.div.classList.add('tile_guess_pop');
     if (!this.correctlyGuessed) {
         let faliureMark = document.createElement('div');
         faliureMark.classList.add('faliure_mark');
         this.div.appendChild(faliureMark);
+
+        mistakesMade++;
+    }
+    else if (this.correctState == true) {
+        filledTilesGuessedCorrectly++;
     }
 
     // Update the line number visuals
     UpdateRowNumberVisuals(this.row);
     UpdateColumnNumberVisuals(this.column);
+
+    tilesFilledCount++;
+
+    // Every filled tile has been found, so every remaining tile must be empty. No need to make the player click through all of them.
+    if (!boardLocked && filledTilesGuessedCorrectly == totalFilledTiles) {
+        AutoFillRemainingTiles();
+    }
+
+    if (tilesFilledCount == tiles.length) {
+        onAllTilesFilled();
+    }
+}
+
+// Marks every not-yet-guessed tile as empty. Safe to call once every filled tile has already been correctly identified,
+// since the row/column clue totals guarantee no unguessed tile can still be a filled one.
+function AutoFillRemainingTiles() {
+    tiles.forEach((tile) => {
+        if (!tile.guessed) {
+            tile.GuessTile(false);
+        }
+    });
+}
+
+// Called once every tile on the board has been guessed. Locks the board and shows a win animation if no mistakes were made.
+function onAllTilesFilled() {
+    boardLocked = true;
+
+    let winOverlay = document.getElementById('win-overlay');
+    let winMessage = document.getElementById('win-message-text');
+
+    if (mistakesMade == 0) {
+        winMessage.textContent = 'Perfect! You Win!';
+        PlayVictoryAnimation();
+    }
+    else {
+        winMessage.textContent = `Solved! (${mistakesMade} mistake${mistakesMade == 1 ? '' : 's'})`;
+    }
+
+    winOverlay.style.display = 'flex';
+}
+
+// Plays a wave-like celebration animation across the board when the puzzle is solved with no mistakes
+function PlayVictoryAnimation() {
+    tiles.forEach((tile) => {
+        let delay = (tile.row + tile.column) * 40;
+        tile.div.style.animationDelay = `${delay}ms`;
+        tile.div.classList.add('tile_win_wave');
+    });
 }
 Tile.prototype.OnMouseOver = function () {
     changeHoveredTile(this);
@@ -776,6 +836,14 @@ function GetGridArray() {
 }
 
 function NewGame() {
+    boardLocked = false;
+    mistakesMade = 0;
+    tilesFilledCount = 0;
+    filledTilesGuessedCorrectly = 0;
+
+    let winOverlay = document.getElementById('win-overlay');
+    winOverlay.style.display = 'none';
+
     let boardSizeSeedOffset = tileRows * 3 + tileColumns * 5; // This probably isn't necesary but I don't like how the numbers stay similar if you change the board size
     let srng = new SeededRNG(seed + boardSizeSeedOffset);
 
@@ -860,6 +928,9 @@ function NewGame() {
         let numbers = GetLineNumbers(line);
         columnNumbers.push(numbers);
     }
+
+    // The total filled tile count for a row/column is fixed by its clue numbers no matter how any wildcards within it end up resolved
+    totalFilledTiles = rowNumbers.reduce((sum, numbers) => sum + numbers.reduce((lineSum, n) => lineSum + n, 0), 0);
 
     // Solve the board
     rowNeedsChecking = Array(rowNumbers.length).fill(true); // Mark all the rows as needing to be checked
