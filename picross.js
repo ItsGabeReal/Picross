@@ -13,7 +13,7 @@ let selectingTiles = false;
 let firstSelected; // The starting point when drag selecting
 let selectedTiles = []; // All tiles currently selected by drag selecting
 let selectionGuess; // Used to keep track of what our guess is when drag selecting
-let seed = 36; // seed 36 in a 10x10 is useful for wildcard testing
+let seed = Date.now(); // seed 36 in a 10x10 is useful for wildcard testing
 let visualizeSolution = false;
 
 // For some stupid reason you aren't outright told what button has just been pressed. You're told which buttons are being pressed
@@ -28,34 +28,11 @@ let columnNeedsChecking;
 function onLoad() {
     boardContainer = document.getElementById('boardContainer');
 
-    document.getElementById('seed-input').value = seed;
+    document.getElementById('board-rows-input').value = tileRows;
+    document.getElementById('board-columns-input').value = tileColumns;
+    // document.getElementById('seed-input').value = seed;
 
     NewGame();
-    /**
-     * 20x20: 100 samples
-     * 30x30: 100 samples
-     * 40x40: 30 samples
-     */
-    //benchmark(3);
-}
-
-function benchmark(samples) {
-    let times = [];
-    for (let i = 0; i < samples; i++) {
-        let startTime = new Date();
-        NewGame();
-        seed++;
-        let newGameTime = (new Date()) - startTime;
-        console.log(i + 1 + ": " + newGameTime + "ms");
-        times.push(newGameTime);
-    }
-
-    let totalTime = 0;
-    for (let i = 0; i < times.length; i++) {
-        totalTime += times[i];
-    }
-
-    console.log(`Average time: ${totalTime / times.length}ms`);
 }
 
 function mousePressed(event) {
@@ -172,13 +149,17 @@ function shuffle(array) {
 }
 
 function OnNewGameButtonClicked() {
-    // Set seed form seed input field
-    let seedInput = parseInt(document.getElementById('seed-input').value);
-    if (isNaN(seedInput))
-        seed = 0;
-    else
-        seed = seedInput;
+    tileRows = parseInt(document.getElementById('board-rows-input').value);
+    tileColumns = parseInt(document.getElementById('board-columns-input').value);
 
+    // let seedInput = parseInt(document.getElementById('seed-input').value);
+    // if (isNaN(seedInput))
+    //     seed = 0;
+    // else
+    //     seed = seedInput;
+
+
+    seed = Date.now();
     NewGame();
 }
 
@@ -976,7 +957,7 @@ function CreateBoard() {
 }
 
 function UpdateRowNumberVisuals(Row) {
-    // Check the amount of discovered groups on the left and right, and if it's discovered then cross it out
+    // Cross out discovered groups from the left and right sides
     let leftGroupsDiscovered = 0;
     let rightGroupsDiscovered = 0;
 
@@ -1125,22 +1106,16 @@ function UpdateColumnNumberVisuals(Column) {
 
 // -------------------- SEEDED RNG --------------------
 function SeededRNG(Seed) {
-    this.seed = Seed;
-    this.seedOffset = 0;
-    this.multiplier = 1103515245;
-    this.incrementer = 31051;
-    this.modulus = 2147483647;
+    // mulberry32: 32-bit state kept via `| 0` / `>>> 0` so large seeds never
+    // hit floating point precision loss the way the old LCG did.
+    this.state = Seed | 0;
 }
-SeededRNG.prototype.get = function () { // Outputs a random number between 0 and 1, then increases the seed offset
+SeededRNG.prototype.get = function () { // Outputs a random number between 0 and 1, then advances the state
+    this.state |= 0;
+    this.state = (this.state + 0x6D2B79F5) | 0;
 
-    let output = this.seed + this.seedOffset; // Start with the seed
-
-    for (let iteration = 0; iteration < 10; iteration++) { // Run the algorithm multiple times for a more random number
-        output = (this.multiplier * output + this.incrementer) % this.modulus;
-    }
-
-    output /= this.modulus;
-
-    this.seedOffset += Math.floor(99 * output) + 1;
-    return output;
+    let output = this.state;
+    output = Math.imul(output ^ (output >>> 15), output | 1);
+    output ^= output + Math.imul(output ^ (output >>> 7), output | 61);
+    return ((output ^ (output >>> 14)) >>> 0) / 4294967296;
 }

@@ -162,7 +162,7 @@
             border-radius: 1vmin;
             position: relative;
             color: white;
-            margin-left: 10vmin;
+            margin: 12px;
         }
 
         .seed-container {
@@ -186,6 +186,7 @@
             font-weight: 600;
             background-color: white;
             box-shadow: inset 0 0 0.25vmin #000000;
+            cursor: pointer;
         }
 
         .new-game-button:hover {
@@ -195,6 +196,10 @@
         .new-game-button:active {
             box-shadow: inset 0 0 0.5vmin #ff0000;
         }
+
+        .number-input {
+            width: 30px;
+        }
         
     </style>
 </head>
@@ -203,16 +208,20 @@
     onmouseleave="mouseLeave(event)" ondragstart="return false;" ondrop="return false;" oncontextmenu="return false;">
     <div class="new-game-panel">
         <div class="seed-container">
-            <label for="seed-input" style="margin-right: 1vmin;">Seed:</label>
-            <input id="seed-input" type="number">
+            <label style="margin-right: 1vmin;">Size:</label>
+            <input id="board-rows-input" type="number" style="width: 40px;">
+            <div style="margin: 4px;">x</div>
+            <input id="board-columns-input" type="number" style="width: 40px;">
         </div>
+        <!-- div class="seed-container">
+            <label for="seed-input" style="margin-right: 1vmin;">Seed:</label>
+            <input id="seed-input" type="number" style="width: 80px;">
+        </div> -->
         <button class="new-game-button" onclick="OnNewGameButtonClicked()">New Game</button>
     </div>
     <table class="board-container">
         <tbody id="boardContainer"></tbody>
     </table>
-
-
 </body>
 
 </html>
