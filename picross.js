@@ -315,6 +315,8 @@ Tile.prototype.OnMouseOver = function () {
     if (!this.guessed) {
         this.div.classList.add('tile_hover');
     }
+    rowNumberDivs[this.row].classList.add('line-numbers-highlight');
+    columnNumberDivs[this.column].classList.add('line-numbers-highlight');
 }
 Tile.prototype.OnMouseLeave = function () {
     if (hoveredTile == this) {
@@ -323,6 +325,8 @@ Tile.prototype.OnMouseLeave = function () {
     if (!this.guessed) {
         this.div.classList.remove('tile_hover');
     }
+    rowNumberDivs[this.row].classList.remove('line-numbers-highlight');
+    columnNumberDivs[this.column].classList.remove('line-numbers-highlight');
 }
 Tile.prototype.SetSelected = function (Selected) {
     if (this.guessed) {
